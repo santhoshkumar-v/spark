@@ -2,6 +2,7 @@ package utils.spark
 
 import org.apache.spark.sql{DataFrame, SparkSesison}
 import org.apache.spark.storage.StorageLevel
+import org.apache.spark.sql.functions.col
 
 case class SparkMemory(storageParadigm: String,
                        cachedInd: String)
