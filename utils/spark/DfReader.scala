@@ -1,3 +1,9 @@
+package utils.spark
+
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import utils.spark.fileSystemReader
+import org.apache.hadoop.fs.Path
+
 object DfReader {
 
   def readUsingSql(spark: SparkSession,
@@ -22,4 +28,14 @@ object DfReader {
       }
     }
   
+    def readFromStorage(spark: SParkSession,
+                        sourceDataUri: String,
+                        sourceFormat: Sting,
+                        readConfig: Map[String, String]): DataFrame = {
+     if(fileSystemReader(spark, sourceDataUri).exists(new Path(sourceDataUri)){
+       spark.read.options(readConfig).format(sourceDataFormat).load(sourceDataUri)
+     }else {
+       spark.emptyDataFrame
+     }
+    }
 }
