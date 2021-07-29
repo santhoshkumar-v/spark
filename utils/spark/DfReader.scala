@@ -1,7 +1,7 @@
 package utils.spark
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import utils.spark.fileSystemReader
+import utils.spark.FileSystemReader
 import org.apache.hadoop.fs.Path
 
 object DfReader {
