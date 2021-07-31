@@ -189,7 +189,53 @@ object MinioUtils{
   }
 }                            
 
-                                   
-                                   
-                                   
+// COpy object and remove Source object
+def moveObject(minioClient: MinioClient,
+               sourceBucket: String,
+               sourceObject: String,
+               targetBucket: String,
+               targetObject: Option[String] = None): Boolean = {
+  
+val moveObjectStatus: ObjectWriteResponse = if(targetObject.isEmpty{
+     if(sourceBucket != targetBucket){
+       minioClient.copyObject(
+        CopyObjectArgs.builder().
+        source(CopySource.builder().bucket(sourceBucket).`object`(sourceObject).build()).
+        bucket(targetBucket).`object`(sourceObject).build())
+     } else{
+     //Creatning dummy write response, since source and target buckt are same, so asusming move is not requeired
+      new ObjectWriteResponse(new Headers(Array("")),targetBucket,null,sourceObject,null,null)
+    }
+  } else{
+      if(sourceBucket == targetBucket && sourceObject != targetObject ){
+         minioClient.copyObject(
+           CopyObjectArgs.builder().
+           source(CopySource.builder().bucket(sourceBucket).`object`(sourceObject).build()).
+           bucket(targetBucket).`object`(targetObject).build())
+       } else{
+          println("Source and target seems to be same, hence skipping")
+          new ObjectWriteResponse(new Headers(Array("")),targetBucket,null,sourceObject,null,null)
+       }
+  }
+                                               
+if(moveObjectStatus.versionId().nonEmpty && moveObjectStatus.etag().nonEmpty){
+  val sourceObjectPath =  if(sourceObject.takeRight(1).eq("/")){
+    sourceObject.dropRight(1)
+  } else{
+    sourceObject
+  }
+  
+  val sourceObjectName = sourceObjectPath.split("/").last
+  val sourceObjectDeleteStatus = deleteTempObjects(minioClient,sourcebucket,sourceObjectName)
+   if(sourceObjectDeleteStatus) {
+    println("Failed to remove source object $sourceBucket/$sourceObject")
+     true
+   } else{
+     false
+   }
+} else{
+ println("Failed to move object $sourceBucket/$sourceObject into $targetBucket/$targetObject")
+  false
+}
+
 }  
