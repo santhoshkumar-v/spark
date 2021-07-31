@@ -10,6 +10,8 @@ import io.minio.CopySource
 import io.minio._
 import okhttp3.Headers
 
+import utils.storage.object.ObjectStorageUtils.ObjectInfo
+
 object MinioUtils{
   
   def initialiseMinioClient(accessKeyId: String,
@@ -219,14 +221,16 @@ val moveObjectStatus: ObjectWriteResponse = if(targetObject.isEmpty{
   }
                                                
 if(moveObjectStatus.versionId().nonEmpty && moveObjectStatus.etag().nonEmpty){
-  val sourceObjectPath =  if(sourceObject.takeRight(1).eq("/")){
-    sourceObject.dropRight(1)
-  } else{
-    sourceObject
-  }
+  val sourceObjectInfo = parseObjectUrl(s"$sourceBucket/sourceObject")
+ // val sourceObjectPath =  if(sourceObject.takeRight(1).eq("/")){
+ //   sourceObject.dropRight(1)
+ // } else{
+ //   sourceObject
+  //}
+//  val sourceObjectName = sourceObjectPath.split("/").last
+ // val sourceObjectDeleteStatus = deleteTempObjects(minioClient,sourcebucket,sourceObjectName)
   
-  val sourceObjectName = sourceObjectPath.split("/").last
-  val sourceObjectDeleteStatus = deleteTempObjects(minioClient,sourcebucket,sourceObjectName)
+   val sourceObjectDeleteStatus = deleteTempObjects(minioClient,sourcebucket,sourceObjectInfo.objectPath,sourceObjectInfo.objectName)
    if(sourceObjectDeleteStatus) {
     println("Failed to remove source object $sourceBucket/$sourceObject")
      true
