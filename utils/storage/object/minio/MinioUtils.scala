@@ -93,11 +93,27 @@ object MinioUtils{
     }
     //If the iterator returns nothing, then remove operation is success
     true
-  }
+}
   
-  def uploadFile(){
-  
-  }
+  def uploadFile(minioClient: MinioClinet,
+                sourceFileName: String,
+                targetBucket: String,
+                targetObjectName: String): Boolean = {
+   if(new File(sourceFileName).exists){
+     //if Minio path end with /
+   val targetObjectPath = if(targetObjectName.endsWith("/"){
+     targetObjectName + sourceFile.split("/").last
+   } else {
+     targetObjectName
+   }
+                             
+   minioCLient.uploadObject(UploadObjectArgs.builder().bucket(targetBucket).`object`(targetObjectName).filename(sourceFileName).build()
+   if(validateObject(minioClient,targetBucket,targetObjectName){
+     true
+   }else{
+     false
+   }
+}
     
   def putObject(minioClient: MinioClient,
                 sourceDataStream: Array[Byte],
@@ -105,8 +121,75 @@ object MinioUtils{
                 targetObjectName: String,
                 forceWrite: Boolen = false,
                 contentType: Option[String] = None): Boolean = {
-   
+   if(validateObject(minioClient,targetBuckdt,targetObjectName) && !forceWrite){
+     println("Target object exists already !!!")
+     false
+   } else{
+      if(contentType.isEmpty){
+      minioClient.putObject(PutObjectARgs.builder().bucket(targetBucket).`object`(targetObjectName).
+                            stream(new ByteArrayInputSTream(sourceDataStream), sourceDataStream.size, -1).build())
+      }else{
+      minioClient.putObject(PutObjectARgs.builder().bucket(targetBucket).`object`(targetObjectName).
+                            stream(new ByteArrayInputSTream(sourceDataStream), sourceDataStream.size, -1).
+                            contentType(contentType.get).build())
+      }
+   }
     
-  }
+}
   
+  def deleteTempObjects(minioCLient: MinioClient,
+                       bucket: String,
+                       folderPrefix: String,
+                       tempPathPrefix: String*): Boolean = {
+   //intialise linkedList to hold object to be deleted 
+   val deleteObjectsList = new util.LinkedList[DeleteObject]
+   val objectPathPrefix = if(folderPrefix.trim.takeRight(1).equals("/")){
+     folderPrefix.dropRight(1)
+   }else{
+     folderPrefix
+   }
+   
+   if(bucket.nonEmpty && folderPrefix.nonEmpty){
+     val tempObjectPrefix = if(tempPathPrefix.isEmpty){
+      // Set the  temp path prefix if not set
+     List("_temporary",".spark-staging",".hive-staging") 
+     }else{
+     deletePathPrefix
+     }
+     
+       
+       //iterate over each of the temp object prefix
+       tempObjectPrefix.
+       foreach{ objectPrefix =>
+         if(validateObject(minioClient,bucket,s"$objectPathPrefix/$objectPrefix")){
+           listVersionedBucket(minioClient, bucket,s"$objectPathPrefix/$objectPrefix").
+           forEach{ fqObjectName =>
+             val formattedObjectName = URLDecoder.decode(fqObjectName.get().objectName(),"UTF-8")
+             deleteObjectsList.add(new DeleteObject(formattedObjectName,fqObjectName.get().versionId())
+                   }
+                 }
+              }
+
+     //CHeck if list of obejcts to be deleted is empty
+     // NonEMpty unavaliable
+    if(!deleteObjectsList.isEmpty){
+      if(removeObjects(minioClient,bucket,deleteObjectsList)){
+        true
+      } else{
+        println("Failed to remove object")
+        false
+      }
+    } else{
+      println("No object marked for delete")
+      false
+    }
+  } else{
+    println("Object Path $bucket$folderPrefix doesn't exist")
+    false
+  }
+}                            
+
+                                   
+                                   
+                                   
 }  
