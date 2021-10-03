@@ -5,6 +5,8 @@ import org.apache.hadoop.fs.{FileSystem, LocatedFileStatus, Path}
 import org.apache.spark.sql.SparkSession
 
 import scala.collection.mutable
+import org.tamil.utils.DateUtils.{formatDate, formatMonthDay}
+case class Bound(lowerBound: String,   upperBound :String)
 
 object FileSystemReader {
 
@@ -71,11 +73,12 @@ object FileSystemReader {
 
   def generateUri(uri: String,
                   epochSec: Long): String ={
-    val (year, month, day) = (formattedDate._1, formatMonthDay (formattedDate._2), formatMonthDay (formattedDate._3) )
+    val formattedDate = formatDate(epochSec)
+    val (year, month, day) = (formattedDate.year, formatMonthDay(formattedDate.month), formatMonthDay(formattedDate.day) )
     uri.replaceAll ("""\$\{YYYY\}""", year.toString).
     replaceAll ("""\$\{MM\}""", month.toString).
     replaceAll ("""\$\{DD\}""", day.toString).
-    replaceAll ("""\$\{YYYY\}""", year.toString.takeRight (2) ).
+    replaceAll ("""\$\{YY\}""", year.toString.takeRight(2) ).
     replaceAll ("""\$\{M\}""", month.toInt.toString).
     replaceAll ("""\$\{D\}""", day.toInt.toString)
   }
